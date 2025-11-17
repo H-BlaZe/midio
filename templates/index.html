@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🎭 Hidio </title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+     <header class="header">
+    <div class="title-row">
+        <img src="{{ url_for('static', path='logo.png') }}" alt="Hidio  Logo" class="logo" />
+        <h1 class="title">Hidio </h1>
+    </div>
+
+    <p class="subtitle">
+        Hide audio inside images • Lossless • Perfect reconstruction
+    </p>
+
+    <a
+        href="/about"
+        style="
+            display: inline-block;
+            margin-top: 15px;
+            background: var(--secondary);
+            color: var(--black);
+            padding: 10px 20px;
+            text-decoration: none;
+            border: 3px solid var(--black);
+            font-weight: 900;
+            text-transform: uppercase;
+            box-shadow: 3px 3px 0 var(--black);
+        "
+    >
+        📚 LEARN MORE
+    </a>
+</header>
+
+      <!-- Mode Selector -->
+      <div class="mode-selector">
+        <button class="mode-btn active" data-mode="embed">
+          <span class="emoji">📥</span>
+          EMBED AUDIO
+        </button>
+        <button class="mode-btn" data-mode="extract">
+          <span class="emoji">📤</span>
+          EXTRACT AUDIO
+        </button>
+      </div>
+
+      <!-- Embed Mode -->
+      <div class="mode-content" id="embed-mode">
+        <div class="card">
+          <h2 class="card-title">🎵 AUDIO INPUT</h2>
+
+          <div class="audio-input-selector">
+            <button class="input-type-btn active" data-type="upload">
+              📁 UPLOAD FILE
+            </button>
+            <button class="input-type-btn" data-type="record">
+              🎤 RECORD AUDIO
+            </button>
+          </div>
+
+          <!-- Upload Audio -->
+          <div class="audio-input-content" id="upload-audio">
+            <div class="file-upload">
+              <input
+                type="file"
+                id="audio-file"
+                accept="audio/*"
+                class="file-input"
+              />
+              <label for="audio-file" class="file-label">
+                <span class="file-icon">🎵</span>
+                <span class="file-text">CHOOSE AUDIO FILE</span>
+              </label>
+              <div class="file-name" id="audio-file-name"></div>
+            </div>
+          </div>
+
+          <!-- Record Audio -->
+          <div class="audio-input-content hidden" id="record-audio">
+            <div class="recorder">
+              <button class="record-btn" id="start-record">
+                <span class="record-icon">⏺</span>
+                START RECORDING
+              </button>
+              <button class="record-btn stop" id="stop-record" disabled>
+                <span class="record-icon">⏹</span>
+                STOP RECORDING
+              </button>
+              <div class="recording-status" id="recording-status"></div>
+              <audio
+                id="recorded-audio"
+                controls
+                class="audio-player hidden"
+              ></audio>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="card-title">🖼️ IMAGE INPUT</h2>
+          <div class="file-upload">
+            <input
+              type="file"
+              id="image-file"
+              accept="image/*"
+              class="file-input"
+            />
+            <label for="image-file" class="file-label">
+              <span class="file-icon">🖼️</span>
+              <span class="file-text">CHOOSE IMAGE</span>
+            </label>
+            <div class="file-name" id="image-file-name"></div>
+            <div class="image-preview" id="image-preview"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="card-title">⚙️ ADVANCED SETTINGS</h2>
+          <div class="settings">
+            <div class="setting-group">
+              <label class="setting-label">
+                FFT Size: <span id="fft-value">1024</span>
+              </label>
+              <input
+                type="range"
+                id="n-fft"
+                min="512"
+                max="4096"
+                step="512"
+                value="1024"
+                class="slider"
+              />
+            </div>
+            <div class="setting-group">
+              <label class="setting-label">
+                Hop Length: <span id="hop-value">512</span>
+              </label>
+              <input
+                type="range"
+                id="hop-length"
+                min="128"
+                max="2048"
+                step="128"
+                value="512"
+                class="slider"
+              />
+            </div>
+          </div>
+        </div>
+
+        <button class="action-btn" id="embed-btn">
+          <span class="btn-icon">🎭</span>
+          EMBED AUDIO IN IMAGE
+        </button>
+
+        <div class="result hidden" id="embed-result"></div>
+      </div>
+
+      <!-- Extract Mode -->
+      <div class="mode-content hidden" id="extract-mode">
+        <div class="card">
+          <h2 class="card-title">🖼️ IMAGE WITH HIDDEN AUDIO</h2>
+          <div class="file-upload">
+            <input
+              type="file"
+              id="extract-image-file"
+              accept="image/png"
+              class="file-input"
+            />
+            <label for="extract-image-file" class="file-label">
+              <span class="file-icon">🖼️</span>
+              <span class="file-text">CHOOSE PNG IMAGE</span>
+            </label>
+            <div class="file-name" id="extract-image-file-name"></div>
+            <div class="image-preview" id="extract-image-preview"></div>
+          </div>
+        </div>
+
+        <button class="action-btn" id="extract-btn">
+          <span class="btn-icon">🎵</span>
+          EXTRACT AUDIO
+        </button>
+
+        <div class="result hidden" id="extract-result"></div>
+      </div>
+
+      <!-- Loading Spinner -->
+      <div class="loading hidden" id="loading">
+        <div class="spinner"></div>
+        <p class="loading-text">Processing...</p>
+      </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+  </body>
+</html>

@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>How to Use - 🎭 Audio Steganography</title>
+    <link rel="stylesheet" href="/static/style.css" />
+    <style>
+      .about-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .back-btn {
+        background: var(--white);
+        border: 5px solid var(--black);
+        padding: 15px 30px;
+        font-size: 1rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        cursor: pointer;
+        box-shadow: var(--shadow);
+        transition: all 0.1s;
+        text-decoration: none;
+        display: inline-block;
+        margin-bottom: 30px;
+        color: var(--black);
+      }
+
+      .back-btn:hover {
+        transform: translate(2px, 2px);
+        box-shadow: var(--shadow-hover);
+        background: var(--accent);
+      }
+
+      .section {
+        background: var(--white);
+        border: 5px solid var(--black);
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: var(--shadow);
+      }
+
+      .section-title {
+        font-size: 2rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        margin-bottom: 25px;
+        letter-spacing: -1px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      .section-subtitle {
+        font-size: 1.3rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        margin: 30px 0 15px 0;
+        color: var(--primary);
+      }
+
+      .step-list {
+        list-style: none;
+        padding: 0;
+        counter-reset: step-counter;
+      }
+
+      .step-list li {
+        padding: 20px;
+        margin: 15px 0;
+        background: var(--accent);
+        border: 4px solid var(--black);
+        font-weight: 700;
+        box-shadow: 4px 4px 0 var(--black);
+        position: relative;
+        padding-left: 80px;
+        min-height: 60px;
+        display: flex;
+        align-items: center;
+      }
+
+      .step-list li::before {
+        counter-increment: step-counter;
+        content: counter(step-counter);
+        position: absolute;
+        left: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 40px;
+        height: 40px;
+        background: var(--black);
+        color: var(--white);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: 900;
+      }
+
+      .format-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        margin: 20px 0;
+      }
+
+      .format-card {
+        background: var(--success);
+        border: 4px solid var(--black);
+        padding: 25px;
+        box-shadow: 4px 4px 0 var(--black);
+      }
+
+      .format-card.warning {
+        background: #ffe66d;
+      }
+
+      .format-title {
+        font-size: 1.2rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .format-list {
+        list-style: none;
+        padding: 0;
+      }
+
+      .format-list li {
+        padding: 10px 0;
+        font-weight: 700;
+        border-bottom: 2px solid var(--black);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .format-list li:last-child {
+        border-bottom: none;
+      }
+
+      .note-box {
+        background: var(--secondary);
+        color: var(--white);
+        border: 4px solid var(--black);
+        padding: 25px;
+        margin: 20px 0;
+        font-weight: 700;
+        box-shadow: 6px 6px 0 var(--black);
+        font-size: 1.1rem;
+      }
+
+      .note-box.warning {
+        background: #f39c12;
+      }
+
+      .note-box.success {
+        background: #2ecc71;
+      }
+
+      .note-box.info {
+        background: var(--primary);
+      }
+
+      .share-method {
+        background: var(--white);
+        border: 4px solid var(--black);
+        padding: 20px;
+        margin: 15px 0;
+        box-shadow: 4px 4px 0 var(--black);
+      }
+
+      .share-method-title {
+        font-size: 1.3rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        margin-bottom: 15px;
+        color: var(--primary);
+      }
+
+      .share-method.good {
+        border-left: 10px solid #2ecc71;
+      }
+
+      .share-method.bad {
+        border-left: 10px solid #e74c3c;
+        opacity: 0.7;
+      }
+
+      .icon {
+        font-size: 1.5rem;
+        margin-right: 5px;
+      }
+
+      .highlight {
+        background: var(--accent);
+        padding: 3px 8px;
+        border: 2px solid var(--black);
+        font-weight: 900;
+      }
+
+      @media (max-width: 768px) {
+        .section {
+          padding: 20px;
+        }
+
+        .section-title {
+          font-size: 1.5rem;
+        }
+
+        .step-list li {
+          padding-left: 70px;
+        }
+
+        .format-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="about-container">
+      <!-- Header -->
+      <header class="header">
+        <h1 class="title">📚 HOW TO USE</h1>
+        <p class="subtitle">
+          Everything you need to know to hide audio in images
+        </p>
+      </header>
+
+      <a href="/" class="back-btn">← BACK TO APP</a>
+
+      <!-- Quick Start -->
+      <div class="section">
+        <h2 class="section-title">🚀 QUICK START GUIDE</h2>
+
+        <h3 class="section-subtitle">📥 TO HIDE AUDIO IN AN IMAGE:</h3>
+        <ol class="step-list">
+          <li>Choose your audio (upload a file OR record directly)</li>
+          <li>Choose the image you want to hide audio in</li>
+          <li>Click "EMBED AUDIO IN IMAGE"</li>
+          <li>
+            Download the result - it looks identical but contains hidden audio!
+          </li>
+        </ol>
+
+        <h3 class="section-subtitle">📤 TO EXTRACT HIDDEN AUDIO:</h3>
+        <ol class="step-list">
+          <li>Switch to "EXTRACT AUDIO" mode</li>
+          <li>Upload the PNG image with hidden audio</li>
+          <li>Click "EXTRACT AUDIO"</li>
+          <li>Download your audio file - perfect quality!</li>
+        </ol>
+      </div>
+
+      <!-- Supported Formats -->
+      <div class="section">
+        <h2 class="section-title">✅ WHAT FILES CAN I USE?</h2>
+
+        <div class="format-grid">
+          <div class="format-card">
+            <div class="format-title">🎵 AUDIO FILES</div>
+            <ul class="format-list">
+              <li><span class="icon">✅</span> MP3</li>
+              <li><span class="icon">✅</span> WAV</li>
+              <li><span class="icon">✅</span> FLAC</li>
+              <li><span class="icon">✅</span> M4A / AAC</li>
+              <li><span class="icon">✅</span> OGG</li>
+              <li><span class="icon">🎤</span> Record directly</li>
+            </ul>
+          </div>
+
+          <div class="format-card">
+            <div class="format-title">🖼️ IMAGE FILES</div>
+            <ul class="format-list">
+              <li><span class="icon">✅</span> JPEG / JPG</li>
+              <li><span class="icon">✅</span> PNG</li>
+              <li><span class="icon">✅</span> BMP</li>
+              <li><span class="icon">✅</span> GIF</li>
+              <li><span class="icon">✅</span> TIFF</li>
+              <li><span class="icon">✅</span> WebP</li>
+            </ul>
+          </div>
+
+          <div class="format-card warning">
+            <div class="format-title">📤 OUTPUT</div>
+            <ul class="format-list">
+              <li>
+                <span class="icon">🖼️</span> PNG image (with hidden audio)
+              </li>
+              <li><span class="icon">🎵</span> WAV audio (when extracting)</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="note-box success">
+          <strong>✅ GOOD NEWS:</strong> This website supports ALL major audio
+          formats! You can use MP3, WAV, FLAC, or any common audio file.
+        </div>
+      </div>
+
+      <!-- Sharing Guide -->
+      <div class="section">
+        <h2 class="section-title">📲 HOW TO SHARE YOUR IMAGE</h2>
+
+        <div class="note-box warning">
+          <strong>⚠️ IMPORTANT:</strong> Some apps and websites remove the
+          hidden audio data when you upload images. Here's how to share
+          properly:
+        </div>
+
+        <h3 class="section-subtitle">✅ SAFE WAYS TO SHARE:</h3>
+
+        <div class="share-method good">
+          <div class="share-method-title">💚 WhatsApp - AS A DOCUMENT</div>
+          <ol class="step-list">
+            <li>Open WhatsApp chat</li>
+            <li>Click the <span class="highlight">📎 Attach</span> button</li>
+            <li>
+              Choose <span class="highlight">📄 Document</span> (NOT
+              Photo/Gallery)
+            </li>
+            <li>Select your PNG file</li>
+            <li>Send it!</li>
+          </ol>
+          <div class="note-box success" style="margin-top: 15px">
+            <strong>✅ WHY THIS WORKS:</strong> Sending as a document preserves
+            all metadata. The recipient can download the exact file with hidden
+            audio intact!
+          </div>
+        </div>
+
+        <div class="share-method good">
+          <div class="share-method-title">💚 EMAIL</div>
+          <p style="font-weight: 700; margin: 10px 0">
+            Attach the PNG file to an email. Email preserves all data perfectly!
+          </p>
+        </div>
+
+        <div class="share-method good">
+          <div class="share-method-title">💚 CLOUD STORAGE</div>
+          <ul class="format-list">
+            <li><span class="icon">✅</span> Google Drive</li>
+            <li><span class="icon">✅</span> Dropbox</li>
+            <li><span class="icon">✅</span> OneDrive</li>
+            <li><span class="icon">✅</span> WeTransfer</li>
+          </ul>
+          <p style="font-weight: 700; margin-top: 15px">
+            Upload your PNG and share the download link. Perfect!
+          </p>
+        </div>
+
+        <div class="share-method good">
+          <div class="share-method-title">💚 TELEGRAM - AS A FILE</div>
+          <p style="font-weight: 700; margin: 10px 0">
+            Send as a file (not compressed image). Works perfectly!
+          </p>
+        </div>
+
+        <div class="share-method good">
+          <div class="share-method-title">💚 DIRECT FILE TRANSFER</div>
+          <ul class="format-list">
+            <li><span class="icon">✅</span> USB drive</li>
+            <li><span class="icon">✅</span> AirDrop (Apple)</li>
+            <li><span class="icon">✅</span> Nearby Share (Android)</li>
+            <li><span class="icon">✅</span> Bluetooth file transfer</li>
+          </ul>
+        </div>
+
+        <h3 class="section-subtitle" style="color: #e74c3c">
+          ❌ AVOID THESE METHODS:
+        </h3>
+
+        <div class="share-method bad">
+          <div class="share-method-title">❌ WhatsApp - AS A PHOTO</div>
+          <p style="font-weight: 700; margin: 10px 0">
+            Sending as a photo compresses the image and removes hidden audio
+            data.
+            <strong>Always use "Document" mode instead!</strong>
+          </p>
+        </div>
+
+        <div class="share-method bad">
+          <div class="share-method-title">❌ SOCIAL MEDIA</div>
+          <ul class="format-list">
+            <li><span class="icon">❌</span> Instagram</li>
+            <li><span class="icon">❌</span> Facebook</li>
+            <li><span class="icon">❌</span> Twitter / X</li>
+            <li><span class="icon">❌</span> TikTok</li>
+            <li><span class="icon">❌</span> Snapchat</li>
+          </ul>
+          <p style="font-weight: 700; margin-top: 15px">
+            These platforms automatically strip metadata to save space.
+          </p>
+        </div>
+
+        <div class="share-method bad">
+          <div class="share-method-title">❌ IMAGE EDITING APPS</div>
+          <p style="font-weight: 700; margin: 10px 0">
+            Opening and re-saving in Photoshop, GIMP, or other editors may
+            remove the hidden audio.
+          </p>
+        </div>
+      </div>
+
+      <!-- Tips & Tricks -->
+      <div class="section">
+        <h2 class="section-title">💡 TIPS & TRICKS</h2>
+
+        <div class="note-box info">
+          <strong>🎤 RECORDING TIP:</strong> For best quality, record in a quiet
+          environment and speak clearly into your microphone.
+        </div>
+
+        <div class="note-box">
+          <strong>🖼️ IMAGE TIP:</strong> Use high-quality images (not blurry or
+          low-resolution) for best results. The image quality doesn't affect
+          audio quality, but looks better!
+        </div>
+
+        <div class="note-box success">
+          <strong>📏 FILE SIZE:</strong> Longer audio = larger file. A 1-minute
+          song creates roughly 2-5 MB PNG files. That's still small and easy to
+          share!
+        </div>
+
+        <div class="note-box warning">
+          <strong>⚙️ ADVANCED SETTINGS:</strong> Default settings work great!
+          Only change FFT Size and Hop Length if you know what you're doing.
+        </div>
+
+        <div class="note-box info">
+          <strong>🎯 PERFECT QUALITY:</strong> The extracted audio is
+          <em>exactly</em> the same as the original - no quality loss
+          whatsoever!
+        </div>
+
+        <div class="note-box">
+          <strong>🔐 PRIVACY:</strong> Your files are processed on the server
+          and automatically deleted after download. We don't store anything!
+        </div>
+      </div>
+
+      <!-- Common Questions -->
+      <div class="section">
+        <h2 class="section-title">❓ COMMON QUESTIONS</h2>
+
+        <div class="share-method good">
+          <div class="share-method-title">
+            Q: Will people notice the hidden audio?
+          </div>
+          <p style="font-weight: 700; margin: 10px 0">
+            <strong>No!</strong> The image looks exactly the same. Only someone
+            who knows to extract it using this website can recover the audio.
+          </p>
+        </div>
+
+        <div class="share-method good">
+          <div class="share-method-title">Q: How long can the audio be?</div>
+          <p style="font-weight: 700; margin: 10px 0">
+            Any length! However, longer audio creates larger files. Most songs
+            (3-5 minutes) work perfectly fine.
+          </p>
+        </div>
+
+        <div class="share-method good">
+          <div class="share-method-title">Q: Can I use any image?</div>
+          <p style="font-weight: 700; margin: 10px 0">
+            Yes! Photos, artwork, memes - any image works. Just make sure you
+            have the right to use it.
+          </p>
+        </div>
+
+        <div class="share-method good">
+          <div class="share-method-title">
+            Q: What if my friend doesn't have this website?
+          </div>
+          <p style="font-weight: 700; margin: 10px 0">
+            Just share the website link with them:
+            <span class="highlight">They can extract the audio here!</span>
+          </p>
+        </div>
+
+        <div class="share-method good">
+          <div class="share-method-title">Q: Is my data safe?</div>
+          <p style="font-weight: 700; margin: 10px 0">
+            Yes! Files are processed and immediately deleted. Nothing is stored
+            permanently.
+          </p>
+        </div>
+
+        <div class="share-method good">
+          <div class="share-method-title">
+            Q: Can I embed multiple audio files?
+          </div>
+          <p style="font-weight: 700; margin: 10px 0">
+            One audio file per image. But you can create multiple images with
+            different audio files!
+          </p>
+        </div>
+      </div>
+
+      <!-- Use Cases -->
+      <div class="section">
+        <h2 class="section-title">🎨 CREATIVE USES</h2>
+
+        <div class="format-grid">
+          <div class="format-card">
+            <div class="format-title">💌 PERSONAL MESSAGES</div>
+            <p style="font-weight: 700">
+              Hide a voice message in a photo and send it to loved ones!
+            </p>
+          </div>
+
+          <div class="format-card">
+            <div class="format-title">🎁 SPECIAL GIFTS</div>
+            <p style="font-weight: 700">
+              Create a photo album where each picture has a hidden story or
+              song!
+            </p>
+          </div>
+
+          <div class="format-card">
+            <div class="format-title">🎵 MUSIC PORTFOLIOS</div>
+            <p style="font-weight: 700">
+              Artists can share album artwork with the actual song hidden
+              inside!
+            </p>
+          </div>
+
+          <div class="format-card">
+            <div class="format-title">📚 AUDIO BOOKS</div>
+            <p style="font-weight: 700">
+              Hide chapter audio in book cover images!
+            </p>
+          </div>
+
+          <div class="format-card">
+            <div class="format-title">🎓 EDUCATION</div>
+            <p style="font-weight: 700">
+              Teachers can embed explanations in educational diagrams!
+            </p>
+          </div>
+
+          <div class="format-card">
+            <div class="format-title">🔐 SECRET SHARING</div>
+            <p style="font-weight: 700">
+              Share secret information that only the receiver can extract!
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add this section in your about.html file -->
+
+      <div class="section">
+        <h2 class="section-title">⚙️ ADVANCED SETTINGS EXPLAINED</h2>
+
+        <div class="note-box info">
+          <strong>💡 TIP:</strong> You don't need to change these! The default
+          settings work perfectly for most users. Only adjust if you want to
+          fine-tune the balance between quality and file size.
+        </div>
+
+        <h3 class="section-subtitle">🔢 FFT SIZE (Default: 1024)</h3>
+        <div class="share-method good">
+          <p style="font-weight: 700; margin-bottom: 15px">
+            <strong>What it does:</strong> Controls how detailed the audio
+            analysis is.
+          </p>
+          <ul class="format-list">
+            <li>
+              <span class="icon">📊</span>
+              <strong>Higher values (2048, 4096):</strong> Better frequency
+              detail, larger file size
+            </li>
+            <li>
+              <span class="icon">📉</span>
+              <strong>Lower values (512):</strong> Faster processing, smaller
+              file size, slightly less detail
+            </li>
+            <li>
+              <span class="icon">✅</span>
+              <strong>1024 (Default):</strong> Perfect balance for most audio
+            </li>
+          </ul>
+          <div class="note-box success" style="margin-top: 15px">
+            <strong>When to change:</strong> Use 2048–4096 for audio with many
+            frequency layers. Use 512 for simple recordings to save space.
+          </div>
+        </div>
+
+        <h3 class="section-subtitle">⏱️ HOP LENGTH (Default: 512)</h3>
+        <div class="share-method good">
+          <p style="font-weight: 700; margin-bottom: 15px">
+            <strong>What it does:</strong> Controls how often the audio is
+            analyzed (time precision).
+          </p>
+          <ul class="format-list">
+            <li>
+              <span class="icon">⚡</span>
+              <strong>Higher values (1024, 2048):</strong> Faster processing,
+              smaller files, less time detail
+            </li>
+            <li>
+              <span class="icon">🎯</span>
+              <strong>Lower values (128, 256):</strong> Better time precision,
+              larger files
+            </li>
+            <li>
+              <span class="icon">✅</span> <strong>512 (Default):</strong> Great
+              balance for all types of audio
+            </li>
+          </ul>
+          <div class="note-box success" style="margin-top: 15px">
+            <strong>When to change:</strong> Use lower values (256) for
+            fast-changing audio. Use higher values (1024) for slower, steady
+            audio or to reduce file size.
+          </div>
+        </div>
+
+        <h3 class="section-subtitle">📊 RECOMMENDED COMBINATIONS</h3>
+        <div class="format-grid">
+          <div class="format-card">
+            <div class="format-title">🎤 VOICE RECORDING</div>
+            <ul class="format-list">
+              <li>FFT Size: <span class="highlight">512–1024</span></li>
+              <li>Hop Length: <span class="highlight">512–1024</span></li>
+              <li>Result: Small files, clear voice</li>
+            </ul>
+          </div>
+
+          <div class="format-card">
+            <div class="format-title">🎧 GENERAL AUDIO (BALANCED)</div>
+            <ul class="format-list">
+              <li>FFT Size: <span class="highlight">1024</span></li>
+              <li>Hop Length: <span class="highlight">512</span></li>
+              <li>Result: Great quality, reasonable size</li>
+            </ul>
+          </div>
+
+          <div class="format-card">
+            <div class="format-title">🎼 HIGH DETAIL AUDIO</div>
+            <ul class="format-list">
+              <li>FFT Size: <span class="highlight">2048–4096</span></li>
+              <li>Hop Length: <span class="highlight">256–512</span></li>
+              <li>Result: Highest clarity, larger files</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="note-box warning">
+          <strong>⚠️ IMPORTANT:</strong> Whatever settings you use when
+          embedding the audio, extraction will match automatically. You don’t
+          need to remember the settings — they are stored internally.
+        </div>
+
+        <h3 class="section-subtitle">🎯 SIMPLE GUIDE</h3>
+        <div class="share-method good">
+          <div class="share-method-title">❓ Not sure what to choose?</div>
+          <ol class="step-list">
+            <li>
+              <strong>Stick with the defaults!</strong> (FFT: 1024, Hop: 512)
+            </li>
+            <li>Want a smaller file? Move both sliders to the left</li>
+            <li>Want maximum detail? Move both sliders to the right</li>
+            <li>Your audio will still be processed accurately! 🎉</li>
+          </ol>
+        </div>
+
+        <div class="note-box">
+          <strong>🔬 TECHNICAL NOTE:</strong> These settings control the STFT
+          (Short-Time Fourier Transform). Larger FFT = better frequency
+          resolution. Smaller hop = better timing accuracy. Extraction uses the
+          same parameters automatically.
+        </div>
+      </div>
+
+      <a href="/" class="back-btn">← BACK TO APP</a>
+    </div>
+  </body>
+</html>
