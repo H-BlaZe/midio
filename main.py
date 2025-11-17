@@ -1,5 +1,5 @@
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.requests import Request
@@ -8,24 +8,18 @@ import librosa
 from PIL import Image, PngImagePlugin
 import soundfile as sf
 import os
-import uuid
 from pathlib import Path
-import shutil
 from typing import Optional
 import io
-import wave
 import subprocess
 
 app = FastAPI(title="🎭 Audio Steganography")
 
-# Create directories
+# Create directories (only for static and templates)
 os.makedirs("static", exist_ok=True)
 os.makedirs("templates", exist_ok=True)
-os.makedirs("uploads", exist_ok=True)
-os.makedirs("outputs", exist_ok=True)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
-app.mount("/outputs", StaticFiles(directory="outputs"), name="outputs")
 templates = Jinja2Templates(directory="templates")
 
 
@@ -43,49 +37,46 @@ class AudioImageConverter:
         except Exception as e:
             return False
     
-    def convert_to_wav(self, input_file, output_file):
-        """Convert any audio format to WAV using FFmpeg"""
+    def convert_to_wav_memory(self, input_bytes, input_format='mp3'):
+        """Convert any audio format to WAV using FFmpeg (in-memory)"""
         try:
-            # FFmpeg command to convert to WAV
-            # -i: input file
-            # -ac 1: convert to mono
-            # -ar 22050: sample rate (you can change this)
-            # -y: overwrite output file
             command = [
                 'ffmpeg',
-                '-i', input_file,
+                '-i', 'pipe:0',  # Read from stdin
+                '-f', input_format,
                 '-ac', '1',  # mono
                 '-ar', '22050',  # sample rate
-                '-acodec', 'pcm_s16le',  # PCM 16-bit little-endian
-                '-y',  # overwrite
-                output_file
+                '-acodec', 'pcm_s16le',
+                '-f', 'wav',  # Output format
+                'pipe:1'  # Write to stdout
             ]
             
             result = subprocess.run(
                 command,
+                input=input_bytes,
                 capture_output=True,
-                text=True,
                 timeout=30
             )
             
             if result.returncode == 0:
-                return True
+                return result.stdout
             else:
                 print(f"FFmpeg error: {result.stderr}")
-                return False
+                return None
                 
         except subprocess.TimeoutExpired:
             print("FFmpeg conversion timed out")
-            return False
+            return None
         except Exception as e:
             print(f"FFmpeg conversion failed: {e}")
-            return False
+            return None
     
-    def load_audio(self, audio_path):
-        """Load audio with FFmpeg fallback"""
+    def load_audio_from_bytes(self, audio_bytes, filename):
+        """Load audio from bytes with FFmpeg fallback"""
         try:
             # Try soundfile first
-            y, sr = sf.read(audio_path)
+            audio_io = io.BytesIO(audio_bytes)
+            y, sr = sf.read(audio_io)
             if len(y.shape) > 1:  # Stereo to mono
                 y = np.mean(y, axis=1)
             return y, sr
@@ -93,12 +84,17 @@ class AudioImageConverter:
             print(f"Soundfile failed: {e}, trying FFmpeg...")
             
             try:
-                # Convert to WAV first using FFmpeg
-                temp_wav = audio_path.rsplit('.', 1)[0] + '_temp.wav'
-                if self.convert_to_wav(audio_path, temp_wav):
-                    y, sr = sf.read(temp_wav)
-                    os.remove(temp_wav)
-                    if len(y.shape) > 1:  # Stereo to mono
+                # Get file extension
+                ext = Path(filename).suffix.lower().replace('.', '')
+                if not ext:
+                    ext = 'wav'
+                
+                # Convert using FFmpeg
+                wav_bytes = self.convert_to_wav_memory(audio_bytes, ext)
+                if wav_bytes:
+                    wav_io = io.BytesIO(wav_bytes)
+                    y, sr = sf.read(wav_io)
+                    if len(y.shape) > 1:
                         y = np.mean(y, axis=1)
                     return y, sr
                 else:
@@ -108,16 +104,17 @@ class AudioImageConverter:
             
             try:
                 # Last resort: librosa
-                y, sr = librosa.load(audio_path, sr=None, mono=True)
+                audio_io = io.BytesIO(audio_bytes)
+                y, sr = librosa.load(audio_io, sr=None, mono=True)
                 return y, sr
             except Exception as e3:
                 raise Exception(f"All audio loading methods failed. Error: {e3}")
     
-    def audio_to_image(self, audio_path, base_image_file, output_file, n_fft=1024, hop_length=512):
-        """Hide audio data inside image"""
+    def audio_to_image(self, audio_bytes, audio_filename, base_image_bytes, n_fft=1024, hop_length=512):
+        """Hide audio data inside image (in-memory)"""
         
         # Load audio with fallback methods
-        audio_data, sr = self.load_audio(audio_path)
+        audio_data, sr = self.load_audio_from_bytes(audio_bytes, audio_filename)
         
         # Compute spectrogram
         D = librosa.stft(audio_data, n_fft=n_fft, hop_length=hop_length)
@@ -125,7 +122,7 @@ class AudioImageConverter:
         phase = np.angle(D)
         
         # Load base image
-        base_img = Image.open(base_image_file)
+        base_img = Image.open(io.BytesIO(base_image_bytes))
         if base_img.mode != 'RGB':
             base_img = base_img.convert('RGB')
         
@@ -149,20 +146,23 @@ class AudioImageConverter:
         pnginfo.add_text("original_length", str(len(audio_data)))
         pnginfo.add_text("duration", f"{len(audio_data)/sr:.2f}")
         
-        # Save PNG with embedded data
-        base_img.save(output_file, "PNG", pnginfo=pnginfo, optimize=False)
+        # Save PNG to bytes
+        output_io = io.BytesIO()
+        base_img.save(output_io, "PNG", pnginfo=pnginfo, optimize=False)
+        output_io.seek(0)
         
         return {
-            "file_size_mb": os.path.getsize(output_file) / (1024 * 1024),
+            "image_bytes": output_io.getvalue(),
+            "file_size_mb": len(output_io.getvalue()) / (1024 * 1024),
             "dimensions": base_img.size,
             "duration": len(audio_data) / sr,
             "sample_rate": sr
         }
     
-    def image_to_audio(self, image_file, output_audio):
-        """Extract hidden audio from image"""
+    def image_to_audio(self, image_bytes):
+        """Extract hidden audio from image (in-memory)"""
         
-        img = Image.open(image_file)
+        img = Image.open(io.BytesIO(image_bytes))
         
         if 'magnitude' not in img.info:
             raise ValueError("This image doesn't contain hidden audio data!")
@@ -190,10 +190,13 @@ class AudioImageConverter:
         # Inverse STFT
         y = librosa.istft(D, hop_length=hop_length, length=original_length)
         
-        # Save audio
-        sf.write(output_audio, y, sr)
+        # Save audio to bytes
+        audio_io = io.BytesIO()
+        sf.write(audio_io, y, sr, format='WAV')
+        audio_io.seek(0)
         
         return {
+            "audio_bytes": audio_io.getvalue(),
             "duration": len(y) / sr,
             "sample_rate": sr
         }
@@ -205,7 +208,6 @@ converter = AudioImageConverter()
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     """Serve the main page"""
-    # Check FFmpeg on startup
     ffmpeg_available = converter.check_ffmpeg()
     return templates.TemplateResponse("index.html", {
         "request": request,
@@ -231,138 +233,66 @@ async def embed_audio(
     n_fft: int = Form(1024),
     hop_length: int = Form(512)
 ):
-    """Embed audio into image"""
+    """Embed audio into image (returns image directly)"""
     try:
         # Check FFmpeg availability
         if not converter.check_ffmpeg():
             print("Warning: FFmpeg not available. Some audio formats may not work.")
         
-        # Generate unique ID
-        unique_id = str(uuid.uuid4())
-        
-        # Get file extension
-        audio_ext = Path(audio_file.filename).suffix.lower()
-        if not audio_ext:
-            audio_ext = '.wav'
-        
-        # Save uploaded files
-        audio_path = f"uploads/{unique_id}_audio{audio_ext}"
-        image_path = f"uploads/{unique_id}_image{Path(image_file.filename).suffix}"
-        output_path = f"outputs/{unique_id}_embedded.png"
-        
-        # Save audio file
-        with open(audio_path, "wb") as f:
-            shutil.copyfileobj(audio_file.file, f)
-        
-        # Save image file
-        with open(image_path, "wb") as f:
-            shutil.copyfileobj(image_file.file, f)
+        # Read files into memory
+        audio_bytes = await audio_file.read()
+        image_bytes = await image_file.read()
         
         # Embed audio in image
         result = converter.audio_to_image(
-            audio_path=audio_path,
-            base_image_file=image_path,
-            output_file=output_path,
+            audio_bytes=audio_bytes,
+            audio_filename=audio_file.filename,
+            base_image_bytes=image_bytes,
             n_fft=n_fft,
             hop_length=hop_length
         )
         
-        # Clean up uploaded files
-        try:
-            os.remove(audio_path)
-            os.remove(image_path)
-        except:
-            pass
-        
-        return {
-            "success": True,
-            "output_file": f"/outputs/{unique_id}_embedded.png",
-            "file_id": unique_id,
-            **result
-        }
+        # Return image directly as streaming response
+        return StreamingResponse(
+            io.BytesIO(result["image_bytes"]),
+            media_type="image/png",
+            headers={
+                "Content-Disposition": "attachment; filename=embedded_audio.png",
+                "X-File-Size-MB": str(result["file_size_mb"]),
+                "X-Duration": str(result["duration"]),
+                "X-Sample-Rate": str(result["sample_rate"])
+            }
+        )
     
     except Exception as e:
-        # Clean up on error
-        try:
-            if 'audio_path' in locals():
-                os.remove(audio_path)
-            if 'image_path' in locals():
-                os.remove(image_path)
-            if 'output_path' in locals() and os.path.exists(output_path):
-                os.remove(output_path)
-        except:
-            pass
-        
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 
 @app.post("/api/extract")
 async def extract_audio(image_file: UploadFile = File(...)):
-    """Extract audio from image"""
+    """Extract audio from image (returns audio directly)"""
     try:
-        # Generate unique ID
-        unique_id = str(uuid.uuid4())
-        
-        # Save uploaded image
-        image_path = f"uploads/{unique_id}_image.png"
-        output_audio = f"outputs/{unique_id}_extracted.wav"
-        
-        with open(image_path, "wb") as f:
-            shutil.copyfileobj(image_file.file, f)
+        # Read image into memory
+        image_bytes = await image_file.read()
         
         # Extract audio
-        result = converter.image_to_audio(image_path, output_audio)
+        result = converter.image_to_audio(image_bytes)
         
-        # Clean up
-        try:
-            os.remove(image_path)
-        except:
-            pass
-        
-        return {
-            "success": True,
-            "output_file": f"/outputs/{unique_id}_extracted.wav",
-            "file_id": unique_id,
-            **result
-        }
+        # Return audio directly as streaming response
+        return StreamingResponse(
+            io.BytesIO(result["audio_bytes"]),
+            media_type="audio/wav",
+            headers={
+                "Content-Disposition": "attachment; filename=extracted_audio.wav",
+                "X-Duration": str(result["duration"]),
+                "X-Sample-Rate": str(result["sample_rate"])
+            }
+        )
     
     except Exception as e:
-        # Clean up on error
-        try:
-            if 'image_path' in locals():
-                os.remove(image_path)
-            if 'output_audio' in locals() and os.path.exists(output_audio):
-                os.remove(output_audio)
-        except:
-            pass
-        
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 
-@app.get("/api/download/{file_id}/{file_type}")
-async def download_file(file_id: str, file_type: str):
-    """Download generated file"""
-    if file_type == "image":
-        file_path = f"outputs/{file_id}_embedded.png"
-        media_type = "image/png"
-        filename = "embedded_audio.png"
-    elif file_type == "audio":
-        file_path = f"outputs/{file_id}_extracted.wav"
-        media_type = "audio/wav"
-        filename = "extracted_audio.wav"
-    else:
-        raise HTTPException(status_code=400, detail="Invalid file type")
-    
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="File not found")
-    
-    return FileResponse(
-        file_path, 
-        media_type=media_type, 
-        filename=filename,
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
-    )
-    
 @app.get("/about", response_class=HTMLResponse)
 async def about_page(request: Request):
     """Serve the about page"""
